@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DailyDost - Simple Monthly Habit Tracker</title>
+  <style>
+    /* Basic styling simplified */
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; background: #f4f7f8; padding: 10px;}
+    h1, #month-year { text-align: center; color: #2a9d8f; }
+    #nav-buttons { text-align: center; margin: 10px 0; }
+    button { padding: 6px 12px; margin: 0 5px; background: #2a9d8f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #21867a; }
+    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .day-header { font-weight: bold; text-align: center; padding: 8px 0; color: #264653; border-bottom: 2px solid #2a9d8f; }
+    .day-cell { background: white; min-height: 90px; border-radius: 6px; padding: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+    .day-number { font-weight: bold; color: #2a9d8f; font-size: 14px; margin-bottom: 5px; }
+    .habit-item { background: #e9f5f2; margin-bottom: 3px; padding: 2px 6px; border-radius: 12px; font-size: 13px; color: #2a9d8f; display: flex; justify-content: space-between; align-items: center; }
+    .completed { text-decoration: line-through; color: #999; }
+    #habit-form-container { background: white; padding: 15px; border-radius: 8px; margin-top: 20px; box-shadow: 0 3px 7px rgba(0,0,0,0.1); }
+    #habit-form input, #habit-form select { padding: 7px; margin-right: 10px; border: 2px solid #2a9d8f; border-radius: 4px; font-size: 14px; }
+    #habit-form button { padding: 8px 12px; cursor: pointer; }
+    #progress-container { background: #ddd; border-radius: 10px; height: 20px; max-width: 600px; margin: 20px auto 5px; overflow: hidden; }
+    #progress-bar { height: 100%; background: #2a9d8f; width: 0%; transition: width 0.3s ease; }
+    #progress-text { text-align: center; color: #2a9d8f; font-weight: bold; }
+    #quote { text-align: center; font-style: italic; margin-top: 25px; color: #264653; }
+  </style>
+</head>
+<body>
+
+<h1>DailyDost - Simple Monthly Habit Tracker</h1>
+
+<div id="month-year"></div>
+<div id="nav-buttons">
+  <button id="prev-month">&lt; Prev</button>
+  <button id="next-month">Next &gt;</button>
+</div>
+
+<div id="progress-container"><div id="progress-bar"></div></div>
+<div id="progress-text">Completion: 0%</div>
+
+<div id="calendar"></div>
+
+<div id="habit-form-container">
+  <form id="habit-form">
+    <input type="text" id="habit-name" placeholder="Enter habit" required />
+    <select id="habit-date" required></select>
+    <button type="submit">Add Habit</button>
+  </form>
+</div>
+
+<div id="quote"></div>
+<script>
+  // DOM Elements we'll use
+  const calendar = document.getElementById('calendar');
+  const monthYear = document.getElementById('month-year');
+  const prevMonthBtn = document.getElementById('prev-month');
+  const nextMonthBtn = document.getElementById('next-month');
+  const habitForm = document.getElementById('habit-form');
+  const habitNameInput = document.getElementById('habit-name');
+  const habitDateSelect = document.getElementById('habit-date');
+  const quoteDiv = document.getElementById('quote');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+
+  let currentDate = new Date(); // Tracks which month/year is displayed
+  // Stores habits: { 'YYYY-MM-DD': [{name, completed}, ...] }
+  let habits = {};
+
+  // Load saved habits or start fresh
+  function loadHabits() {
+    let data = localStorage.getItem('dailyDostHabits');
+    if (data) {
+      habits = JSON.parse(data);
+    } else {
+      habits = {};
+    }
+  }
+
+  // Save habits to localStorage
+  function saveHabits() {
+    localStorage.setItem('dailyDostHabits', JSON.stringify(habits));
+  }
+// Generates calendar grid with day headers and day cells with habits
+  function generateCalendar(year, month) {
+    calendar.innerHTML = '';
+    const dayHeaders = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    // Add day headers
+    dayHeaders.forEach(day => {
+      let header = document.createElement('div');
+      header.className = 'day-header';
+      header.textContent = day;
+      calendar.appendChild(header);
+    });
+
+    let firstDay = new Date(year, month, 1).getDay();
+    let daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Fill empty cells until first day of month
+    for(let i=0; i < firstDay; i++){
+      let emptyCell = document.createElement('div');
+      emptyCell.className = 'day-cell';
+      emptyCell.style.background = '#f0f0f0';
+      calendar.appendChild(emptyCell);
+    }
+
+    // Add day cells with habits
+    for(let day=1; day<=daysInMonth; day++){
+      let cell = document.createElement('div');
+      cell.className = 'day-cell';
+
+      let dayNum = document.createElement('div');
+      dayNum.className = 'day-number';
+      dayNum.textContent = day;
+      cell.appendChild(dayNum);
+
+      let key = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+      if (habits[key]) {
+        habits[key].forEach((habit, idx) => {
+          let hDiv = document.createElement('div');
+          hDiv.className = 'habit-item';
+          if (habit.completed) hDiv.classList.add('completed');
+          
+          // Habit name text
+          hDiv.textContent = habit.name;
+
+          // Checkbox to mark habit complete
+          let cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = habit.completed;
+          cb.style.marginLeft = '5px';
+          cb.title = 'Mark Complete';
+          cb.addEventListener('change', () => {
+            habits[key][idx].completed = cb.checked;
+            saveHabits();
+            generateCalendar(year, month);
+            updateProgressBar(year, month);
+            displayQuote();
+          });
+
+          hDiv.appendChild(cb);
+          cell.appendChild(hDiv);
+        });
+      }
+      calendar.appendChild(cell);
+    }
+    updateProgressBar(year, month);
+  }
+
+  // Fill the dropdown of dates for adding habits
+  function populateDateDropdown(year, month) {
+    habitDateSelect.innerHTML = '';
+    let daysCount = new Date(year, month + 1, 0).getDate();
+    for(let d = 1; d <= daysCount; d++){
+      let option = document.createElement('option');
+      option.value = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      option.text = d;
+      habitDateSelect.appendChild(option);
+    }
+  }
+
+  // Handle adding new habit
+  habitForm.addEventListener('submit', e => {
+    e.preventDefault();
+    let name = habitNameInput.value.trim();
+    let date = habitDateSelect.value;
+    if(!name) return;
+
+    if(!habits[date]) habits[date] = [];
+    habits[date].push({name: name, completed: false});
+    habitNameInput.value = '';
+    saveHabits();
+    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    displayQuote();
+  });
+// Show current month and year text
+  function updateMonthYear() {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    monthYear.textContent = months[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
+  }
+
+  // Progress bar shows % of completed habits for the month
+  function updateProgressBar(year, month) {
+    let total = 0;
+    let completed = 0;
+
+    for (let key in habits) {
+      if (key.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)) {
+        habits[key].forEach(h => {
+          total++;
+          if(h.completed) completed++;
+        });
+      }
+    }
+
+    let percent = total > 0 ? Math.round((completed/total)*100) : 0;
+    progressBar.style.width = percent + '%';
+    progressText.textContent = `Completion: ${percent}%`;
+  }
+
+  // Simple array of quotes
+  const quotes = [
+    "Success is the sum of small efforts repeated daily. – Robert Collier",
+    "Motivation is what gets you started. Habit is what keeps you going. – Jim Ryun",
+    "The secret of your future is hidden in your daily routine. – Mike Murdock",
+    "Small daily improvements over time lead to stunning results. – Robin Sharma",
+    "Your habits will determine your future. – Jack Canfield"
+  ];
+
+  // Show a random motivational quote
+  function displayQuote() {
+    let i = Math.floor(Math.random() * quotes.length);
+    quoteDiv.textContent = quotes[i];
+  }
+
+  // Previous month button
+  prevMonthBtn.onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    updateUI();
+  }
+
+  // Next month button
+  nextMonthBtn.onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    updateUI();
+  }
+
+  // Update all UI elements
+  function updateUI() {
+    updateMonthYear();
+    populateDateDropdown(currentDate.getFullYear(), currentDate.getMonth());
+    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  }
+
+  // Run on page load
+  loadHabits();
+  updateUI();
+  displayQuote();
+</script>
+</body>
+</html> 
+
+
+
+
+<!--Front Page-->
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DailyDost – Habit Tracker</title>
+  <style>
+    body {
+      background: linear-gradient(120deg, #e9f5f2 50%, #2a9d8f 100%);
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: #fff;
+      padding: 42px 30px 28px 30px;
+      border-radius: 18px;
+      box-shadow: 0 6px 28px rgba(42,157,143,0.17);
+      text-align: center;
+      max-width: 370px;
+      width: 96%;
+    }
+    .logo {
+      font-size: 52px;
+      color: #2a9d8f;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 13px 0;
+      font-size: 2em;
+      color: #2a9d8f;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      color: #355;
+      font-size: 1.08em;
+      margin-bottom: 18px;
+    }
+    ul {
+      text-align: left;
+      color: #264653;
+      font-size: 1em;
+      margin: 20px 0 18px 32px;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 9px;
+    }
+    .btn {
+      background: linear-gradient(90deg, #2a9d8f 80%, #82e6d7 100%);
+      color: white;
+      border: none;
+      padding: 12px 38px;
+      border-radius: 8px;
+      font-size: 1.08em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 22px;
+      margin-bottom: 4px;
+      box-shadow: 0 2px 12px 0 rgba(42,157,143,0.09);
+      transition: background 0.18s;
+    }
+    .btn:hover {
+      background: #21867a;
+    }
+    .footer {
+      margin-top: 22px;
+      color: #999;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">📝</div>
+    <h1>DailyDost</h1>
+    <div class="subtitle">
+      Simple. Visual. Productive.<br>
+      Track your daily habits with ease.
+    </div>
+    <ul>
+      <li>Calendar-based habit tracking</li>
+      <li>Mark your progress daily</li>
+      <li>Visual completion bar</li>
+      <li>Motivational quotes</li>
+    </ul>
+    <a class="btn" href="file:///C:/Users/Aryan%20Sharma/Downloads/dailydost1.html">Get Started</a>
+    <div class="footer">Made for students | Your journey starts here</div>
+  </div>
+</body>
+</html>-->
