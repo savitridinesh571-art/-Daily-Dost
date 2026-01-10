@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DailyDost – Habit Tracker</title>
+  <style>
+    body {
+      background: linear-gradient(120deg, #e9f5f2 50%, #2a9d8f 100%);
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: #fff;
+      padding: 42px 30px 28px 30px;
+      border-radius: 18px;
+      box-shadow: 0 6px 28px rgba(42,157,143,0.17);
+      text-align: center;
+      max-width: 370px;
+      width: 96%;
+    }
+    .logo {
+      font-size: 52px;
+      color: #2a9d8f;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 13px 0;
+      font-size: 2em;
+      color: #2a9d8f;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      color: #355;
+      font-size: 1.08em;
+      margin-bottom: 18px;
+    }
+    ul {
+      text-align: left;
+      color: #264653;
+      font-size: 1em;
+      margin: 20px 0 18px 32px;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 9px;
+    }
+    .btn {
+      background: linear-gradient(90deg, #2a9d8f 80%, #82e6d7 100%);
+      color: white;
+      border: none;
+      padding: 12px 38px;
+      border-radius: 8px;
+      font-size: 1.08em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 22px;
+      margin-bottom: 4px;
+      box-shadow: 0 2px 12px 0 rgba(42,157,143,0.09);
+      transition: background 0.18s;
+    }
+    .btn:hover {
+      background: #21867a;
+    }
+    .footer {
+      margin-top: 22px;
+      color: #999;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">📝</div>
+    <h1>DailyDost</h1>
+    <div class="subtitle">
+      Simple. Visual. Productive.<br>
+      Track your daily habits with ease.
+    </div>
+    <ul>
+      <li>Calendar-based habit tracking</li>
+      <li>Mark your progress daily</li>
+      <li>Visual completion bar</li>
+      <li>Motivational quotes</li>
+    </ul>
+    <a class="btn" href="file:///C:/Users/Aryan%20Sharma/Downloads/dailydost1.html">Get Started</a>
+    <div class="footer">Made for students | Your journey starts here</div>
+  </div>
+</body>
+</html>
